@@ -500,10 +500,19 @@
 </head>
 <body>
     <div class="container">
+
+
         <div class="header">
             <h1>🎮 QUEST CARDS 🗡️</h1>
             <p>Complete suas missões épicas!</p>
         </div>
+        <div style="margin: 20px 0; display: flex; gap: 10px; flex-wrap: wrap;">
+    <button class="btn" onclick="downloadCards()">⬇️ Baixar JSON</button>
+    <label class="btn" style="cursor: pointer;">
+        ⬆️ Carregar JSON
+        <input type="file" id="uploadJsonInput" accept="application/json" style="display: none;" onchange="uploadCards(event)">
+    </label>
+</div>
 
         <button class="btn" id="toggleFormBtn">🆕 Nova Quest</button>
 
@@ -835,6 +844,54 @@
     const form = document.querySelector('.create-card-form');
     form.style.display = (form.style.display === 'none' || form.style.display === '') ? 'block' : 'none';
 });
+
+// Função para baixar os cards em JSON
+function downloadCards() {
+    if (cards.length === 0) {
+        alert('⚠️ Nenhuma quest para exportar!');
+        return;
+    }
+    const dataStr = JSON.stringify(cards, null, 2);
+    const blob = new Blob([dataStr], { type: "application/json" });
+    const url = URL.createObjectURL(blob);
+
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = `quest_cards_${new Date().toISOString().slice(0, 10)}.json`;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+
+    URL.revokeObjectURL(url);
+    showSuccessMessage('💾 Arquivo JSON baixado com sucesso!');
+}
+
+// Função para carregar cards a partir de um JSON
+function uploadCards(event) {
+    const file = event.target.files[0];
+    if (!file) return;
+
+    const reader = new FileReader();
+    reader.onload = function(e) {
+        try {
+            const importedCards = JSON.parse(e.target.result);
+            if (Array.isArray(importedCards)) {
+                // Mesclar cards novos com os existentes
+                cards = [...cards, ...importedCards];
+                saveCardsToStorage();
+                renderCards();
+                showSuccessMessage('📂 Quests importadas com sucesso!');
+            } else {
+                alert('⚠️ Arquivo inválido. O JSON deve conter uma lista de quests.');
+            }
+        } catch (error) {
+            alert('❌ Erro ao ler o arquivo JSON!');
+            console.error(error);
+        }
+    };
+    reader.readAsText(file);
+}
+
 
     </script>
 </body>
